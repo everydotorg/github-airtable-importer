@@ -52,7 +52,7 @@ const githubAirtableImport = (options) => {
           },
         })
       )
-      const chunks = [];
+      const chunks = []
       for (
         let startIndex = 0;
         startIndex < allIssues.length;
@@ -60,10 +60,10 @@ const githubAirtableImport = (options) => {
       ) {
         chunks.push(allIssues.slice(startIndex, startIndex + 10))
       }
-      const results = await Promise.all(chunks.map(chunk =>
-        airtableBase(options.airtableTable).create(chunk)
-      ));
-      return results.reduce((memo, chunkResult) => memo + chunkResult.length, 0);
+      const results = await Promise.all(
+        chunks.map((chunk) => airtableBase(options.airtableTable).create(chunk))
+      )
+      return results.reduce((memo, chunkResult) => memo + chunkResult.length, 0)
     } catch (err) {
       log(
         chalk.red(`Could not import to Airtable base or table: ${err.message}`)
