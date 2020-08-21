@@ -41,7 +41,17 @@ const githubAirtableImport = (options) => {
 
     try {
       const allIssues = issues.map(
-        ({ created_at, updated_at, title, body, html_url, number }) => ({
+        ({
+          created_at,
+          updated_at,
+          title,
+          body,
+          html_url,
+          number,
+          labels,
+          assignee,
+          state,
+        }) => ({
           fields: {
             'Created At': created_at,
             'Updated At': updated_at,
@@ -49,6 +59,9 @@ const githubAirtableImport = (options) => {
             Name: title,
             Description: body,
             'Github URL': html_url,
+            Labels: labels.map((l) => l.name).join(','),
+            Status: state,
+            ...(assignee ? { 'Assigned to': `@${assignee.login}` } : {}),
           },
         })
       )
@@ -61,7 +74,9 @@ const githubAirtableImport = (options) => {
         chunks.push(allIssues.slice(startIndex, startIndex + 10))
       }
       const results = await Promise.all(
-        chunks.map((chunk) => airtableBase(options.airtableTable).create(chunk))
+        chunks.map((chunk) =>
+          airtableBase(options.airtableTable).create(chunk, { typecast: true })
+        )
       )
       return results.reduce((memo, chunkResult) => memo + chunkResult.length, 0)
     } catch (err) {
