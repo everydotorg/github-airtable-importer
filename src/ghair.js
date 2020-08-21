@@ -78,6 +78,7 @@ async function githubAirtableImport(options) {
         const newRows = newIssues.map((issue) => ({
           fields: fieldsFromIssue(issue),
         }))
+
         const chunks = []
         for (
           let startIndex = 0;
@@ -104,6 +105,7 @@ async function githubAirtableImport(options) {
               'Updated At': _2,
               ...fields
             } = fieldsFromIssue(issue)
+
             const existingRow = issueNumbersToExistingRows[issue.number]
 
             // array comparison is different
@@ -115,7 +117,10 @@ async function githubAirtableImport(options) {
                 if (existingArrValues.length > 0 && !fields[key]) {
                   return true
                 }
-                const newArrValues = fields[key].split(',').filter((v) => !!v)
+                const newArrValues =
+                  fields[key].length > 0
+                    ? fields[key].split(',').filter((v) => !!v)
+                    : []
                 if (existingArrValues.length !== newArrValues.length) {
                   return true
                 }
@@ -125,14 +130,13 @@ async function githubAirtableImport(options) {
                     return true
                   }
                 }
-                return false
-              }
-
-              if (
-                (existingRow.fields[key] || undefined) !==
-                (fields[key] || undefined)
-              ) {
-                return true
+              } else {
+                if (
+                  (existingRow.fields[key] || undefined) !==
+                  (fields[key] || undefined)
+                ) {
+                  return true
+                }
               }
             }
             return false
@@ -196,7 +200,9 @@ async function githubAirtableImport(options) {
   airtableSaveSpinner.succeed(
     `Imported ${chalk.bold(
       numNewRows
-    )} issues into Airtable, and updated ${numUpdatedRows} existing rows`
+    )} issues into Airtable, and updated ${chalk.bold(
+      numUpdatedRows
+    )} existing rows`
   )
 }
 
