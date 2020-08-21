@@ -5,7 +5,7 @@ const chalk = require('chalk')
 
 const log = console.log
 
-const githubAirtableImport = (options) => {
+async function githubAirtableImport(options) {
   validateOptions(options)
   const octokit = new Octokit({
     auth: options.githubToken,
@@ -13,25 +13,22 @@ const githubAirtableImport = (options) => {
 
   const [owner, repo] = options.githubUrl.split('/')
 
-  function fetchGithubIssues() {
-    const octokitOptions = octokit.issues.listForRepo.endpoint.merge({
-      owner,
-      repo,
-      per_page: 100,
-      state: options.state,
-    })
-    return octokit
-      .paginate(octokitOptions)
-      .then((data) => {
-        const issues = data.filter((issue) => !issue.pull_request)
-        return issues
+  async function fetchGithubIssues() {
+    try {
+      const octokitOptions = octokit.issues.listForRepo.endpoint.merge({
+        owner,
+        repo,
+        per_page: 100,
+        state: options.state,
       })
-      .catch((err) => {
-        spinner.fail(
-          `Failed to fetch issues from ${chalk.underline(options.githubUrl)}\n`
-        )
-        log(chalk.red(err))
-      })
+      const data = await octokit.paginate(octokitOptions)
+      return data.filter((issue) => !issue.pull_request)
+    } catch (err) {
+      spinner.fail(
+        `Failed to fetch issues from ${chalk.underline(options.githubUrl)}\n`
+      )
+      log(chalk.red(err))
+    }
   }
 
   async function importIssuesToAirtable(issues) {
@@ -87,20 +84,18 @@ const githubAirtableImport = (options) => {
   }
 
   const githubSpinner = ora('Retrieving issues from Github').start()
-  fetchGithubIssues().then((issues) => {
-    githubSpinner.succeed(
-      `Retrieved ${chalk.bold(issues.length)} issues from Github`
-    )
-    const airtableSpinner = ora('Importing issues into Airtable').start()
-    importIssuesToAirtable(issues).then((issuesImported) => {
-      airtableSpinner.succeed(
-        `Imported ${chalk.bold(issuesImported)} issues into Airtable`
-      )
-    })
-  })
+  const issues = await fetchGithubIssues()
+  githubSpinner.succeed(
+    `Retrieved ${chalk.bold(issues.length)} issues from Github`
+  )
+  const airtableSpinner = ora('Importing issues into Airtable').start()
+  const issuesImported = await importIssuesToAirtable(issues)
+  airtableSpinner.succeed(
+    `Imported ${chalk.bold(issuesImported)} issues into Airtable`
+  )
 }
 
-const validateOptions = (options) => {
+function validateOptions(options) {
   let hasError = false
   if (!options.githubToken) {
     hasError = true
@@ -141,11 +136,5 @@ const validateOptions = (options) => {
     process.exit(1)
   }
 }
-
-const reflect = (p) =>
-  p.then(
-    (v) => ({ v, status: 'fulfilled' }),
-    (e) => ({ e, status: 'rejected' })
-  )
 
 module.exports.default = githubAirtableImport
