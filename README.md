@@ -2,7 +2,7 @@
 
 ![Github Clubhouse Importer Demo](https://media.giphy.com/media/f5RDyNavjTGfUakbu9/giphy.gif)
 
-> Import your Github Issues into Clubhouse Stories
+> Import your Github Issues into an Airtable base
 
 ### Installation
 
