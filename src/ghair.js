@@ -86,6 +86,8 @@ async function githubAirtableImport(options) {
       Labels: labels.map((l) => l.name).join(','),
       Status: state,
       ...(assignee ? { 'Assigned to': `@${assignee.login}` } : {}),
+      // Move the item to done in airtable if the issue is closed
+      ...(state === 'closed' ? { 'Sprint status': 'done' } : {}),
     }
   }
 
