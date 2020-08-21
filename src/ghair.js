@@ -5,6 +5,36 @@ const chalk = require('chalk')
 
 const log = console.log
 
+function compareExistingRowToIssueFields(existingRow, fields) {
+  // array comparison is different
+  for (const key in fields) {
+    if (existingRow.fields[key] instanceof Array) {
+      const existingArrValues = existingRow.fields[key].filter((v) => !!v)
+      if (existingArrValues.length > 0 && !fields[key]) {
+        return true
+      }
+      const newArrValues =
+        fields[key].length > 0 ? fields[key].split(',').filter((v) => !!v) : []
+      if (existingArrValues.length !== newArrValues.length) {
+        return true
+      }
+      const existingValues = new Set(existingArrValues)
+      for (const value of newArrValues) {
+        if (!existingValues.has(value)) {
+          return true
+        }
+      }
+    } else {
+      if (
+        (existingRow.fields[key] || undefined) !== (fields[key] || undefined)
+      ) {
+        return true
+      }
+    }
+  }
+  return false
+}
+
 async function githubAirtableImport(options) {
   validateOptions(options)
   const octokit = new Octokit({
@@ -108,38 +138,7 @@ async function githubAirtableImport(options) {
 
             const existingRow = issueNumbersToExistingRows[issue.number]
 
-            // array comparison is different
-            for (const key in fields) {
-              if (existingRow.fields[key] instanceof Array) {
-                const existingArrValues = existingRow.fields[key].filter(
-                  (v) => !!v
-                )
-                if (existingArrValues.length > 0 && !fields[key]) {
-                  return true
-                }
-                const newArrValues =
-                  fields[key].length > 0
-                    ? fields[key].split(',').filter((v) => !!v)
-                    : []
-                if (existingArrValues.length !== newArrValues.length) {
-                  return true
-                }
-                const existingValues = new Set(existingArrValues)
-                for (const value of newArrValues) {
-                  if (!existingValues.has(value)) {
-                    return true
-                  }
-                }
-              } else {
-                if (
-                  (existingRow.fields[key] || undefined) !==
-                  (fields[key] || undefined)
-                ) {
-                  return true
-                }
-              }
-            }
-            return false
+            return compareExistingRowToIssueFields(existingRow, fields)
           })
           .map((issue) => ({
             id: issueNumbersToExistingRows[issue.number].id,
