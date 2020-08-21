@@ -7,13 +7,13 @@
 ### Installation
 
 ```shell
-$ npm install -g @kimmel/github-clubhouse-importer
+$ npm install -g @osdiab/github-airtable-importer
 ```
 
 ### Usage
 
 ```shell
-$ ghch --help
+$ ghair --help
 ```
 
 **NOTE** The provided Github API Token must have Repository Scope access
